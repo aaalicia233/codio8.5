@@ -1,28 +1,71 @@
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-
-
-<h2>Search in TMDb</h2>
-<%# Part 5 here %>
-
-<div class="search-container">
-<%# Part 1 here %>
-<%= form_tag <%# fill in here #%> do %>
-    <label for="searchMovieName">Movie Name</label>
-    <%= text_field_tag 'title', nil, class: "form-control", id: "movie_title_field", placeholder: "Manhunter", id: "movie_title_field"%> 
-    <label for="searchReleaseDateField">Release Year</label>
-    <%= text_field_tag 'release_year', nil, class: "form-control", id: "movie_year_field", placeholder: "1986", id: "movie_year_field"%>
-  
-  <div class="form-check">
-    <%= radio_button_tag 'language', 'en', false, class: "form-check-input" %>
-    <label class="form-check-label" for="language_en">English Only</label>
+<%# 这是指南要求的 flash 消息显示 %>
+<% flash.each do |key, value| %>
+  <div class="alert alert-<%= key %> alert-dismissible fade show" role="alert">
+    <%= value %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
-
-  <div class="form-check">
-    <%= radio_button_tag 'language', 'all', true, class: "form-check-input" %>
-    <label class="form-check-label" for="language_all">All Languages</label>
-  </div>
-  <%= submit_tag 'Search', id: 'tmdb_submit', class: 'btn btn-warning col-2' %>
-  
 <% end %>
-</div>
+
+<h1>Search TMDb</h1>
+
+<%= form_tag search_tmdb_path, method: :get, id: 'tmdb_form' do %>
+
+  <%# 
+    这些字段将生成一个哈希: params[:search]
+    例如: params[:search][:title] 
+  %>
+  <div>
+    <%= label_tag 'search[title]', 'Title' %>
+    <%= text_field_tag 'search[title]', params.dig(:search, :title) %>
+  </div>
+  <div>
+    <%= label_tag 'search[release_year]', 'Release Year (Optional)' %>
+    <%= text_field_tag 'search[release_year]', params.dig(:search, :release_year) %>
+  </div>
+  <div>
+    <%= label_tag 'search[language]', 'Language' %>
+    <%= text_field_tag 'search[language]', params.dig(:search, :language) || 'en-US' %>
+  </div>
+
+  <%= submit_tag 'Search', id: 'tmdb_submit' %>
+<% end %>
+
+<br/>
+<%# 这是指南要求的“添加结果表格” %>
+<% if @movies.present? %>
+  <table class="table" id="search_movies">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Release Date</th>
+        <th>Description</th>
+        <th>Add to RottenPotatoes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @movies.each do |movie| %>
+        <tr>
+          <td><%= movie.title %></td>
+          <td><%= movie.release_date %></td>
+          <td><%= movie.description %></td>
+          <td>
+            <%#
+              这是“Add movie”按钮。它是一个自己的小表单，
+              会将数据 POST 到 'add_movie_path' (我们下一步创建它)。
+            %>
+            <%= form_tag add_movie_path, method: :post do %>
+              <%# 使用 hidden_field_tag 来“秘密”传递数据 %>
+              <%= hidden_field_tag 'movie[title]', movie.title %>
+              <%= hidden_field_tag 'movie[release_date]', movie.release_date %>
+              <%= hidden_field_tag 'movie[rating]', movie.rating %>
+              <%= hidden_field_tag 'movie[description]', movie.description %>
+              <%= submit_tag 'Add movie' %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+<%# 这是你之前添加的 "Back" 链接 %>
+<%= link_to 'Back to list', movies_path %>

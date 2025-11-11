@@ -1,24 +1,22 @@
 class MoviesController < ApplicationController
-  before_action :force_index_redirect, only: [:index]
-
-  def show
-    id = params[:id] # retrieve movie ID from URI route
-    @movie = Movie.find(id) # look up movie by unique ID
-    # will render app/views/movies/show.<extension> by default
+  # 这些是TDD作业开始时就应该存在的标准方法
+  def index
+    # These 3 lines are the patch to stop the view from crashing
+    @all_ratings = Movie.all_ratings
+    @ratings_to_show_hash = {}
+    @sort_by = nil
+  
+    # This is the original line for this assignment
+    @movies = Movie.all
   end
 
-  def index
-    @all_ratings = Movie.all_ratings
-    @movies = Movie.with_ratings(ratings_list, sort_by)
-    @ratings_to_show_hash = ratings_hash
-    @sort_by = sort_by
-    # remember the correct settings for next time
-    session['ratings'] = ratings_list
-    session['sort_by'] = @sort_by
+  def show
+    id = params[:id]
+    @movie = Movie.find(id)
   end
 
   def new
-    # default: render 'new' template
+    # 默认: 渲染 'new' 模板
   end
 
   def create
@@ -45,25 +43,47 @@ class MoviesController < ApplicationController
     redirect_to movies_path
   end
 
+  # --- 这是我们正在TDD的方法 ---
+  def search_tmdb
+    search_params = params["search"] || {} # 使用字符串键
+
+    if search_params["title"].blank? # 使用字符串键
+      flash.now[:warning] = "Please fill in all required fields!"
+      @movies = []
+    else
+      @movies = Movie.find_in_tmdb(search_params)
+      if @movies.empty?
+        flash.now[:warning] = "No movies found with given parameters!"
+      end
+    end
+  end
+
+
+  # --- 把这个新方法粘贴在这里 ---
+  def add_movie
+    # 1. 使用 strong parameters (movie_params) 来安全地创建电影
+    #    '.save' 会返回 true/false
+    @movie = Movie.new(movie_params)
+
+    if @movie.save
+      # 2. 设置 flash 消息 (匹配我们的测试)
+      flash[:success] = "'#{@movie.title}' was successfully added to RottenPotatoes."
+
+      # 3. 重定向到主页 (匹配我们的测试)
+      redirect_to movies_path
+    else
+      # 如果保存失败 (例如，如果未来添加了验证)
+      flash[:warning] = "Failed to add movie."
+      redirect_to search_tmdb_path # 重定向回搜索页
+    end
+  end
+
+private
+# ...
+
   private
-
-  def force_index_redirect
-    return unless !params.key?(:ratings) || !params.key?(:sort_by)
-
-    flash.keep
-    url = movies_path(sort_by: sort_by, ratings: ratings_hash)
-    redirect_to url
-  end
-
-  def ratings_list
-    params[:ratings]&.keys || session[:ratings] || Movie.all_ratings
-  end
-
-  def ratings_hash
-    ratings_list.to_h { |item| [item, "1"] }
-  end
-
-  def sort_by
-    params[:sort_by] || session[:sort_by] || 'id'
+  # 确保 movie_params 存在
+  def movie_params
+    params.require(:movie).permit(:title, :rating, :description, :release_date)
   end
 end
