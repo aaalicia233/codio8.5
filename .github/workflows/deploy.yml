@@ -3,21 +3,44 @@ name: Deploy to Heroku
 on:
   push:
     branches:
-      - master  # 警告：如果你的分支叫 'main'，请把这里改成 'main'
+      - master  # 确保这仍然是你本地的分支名
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
+      # 第 1 步：获取你的代码
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Build and Deploy to Heroku
-        uses: akhileshns/heroku-deploy@v3.12.12 # 这是一个预构建的 GitHub Action
-        with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: "codio8-5" # 你的 Heroku App 名字
-          heroku_email: "nt2418@nyu.edu" # 你的 Heroku 登录邮箱
-          stack: "container"
-          usedocker: true
-          docker_build_args: "--file Dockerfile" # 明确告诉它使用哪个 Dockerfile
+      # 第 2 步：安装 Heroku CLI (这是修复问题的关键！)
+      # 我们使用一个专门用于安装 Heroku CLI 的 Action
+      - name: Install Heroku CLI
+        uses: gha-utilities/heroku-cli-action@v3.2.0
+
+      # 第 3 步：登录 Heroku (为 CLI 创建 .netrc 文件)
+      - name: Log in to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
+        run: |
+          cat > ~/.netrc <<EOF
+            machine api.heroku.com
+              login $HEROKU_EMAIL
+              password $HEROKU_API_KEY
+            machine git.heroku.com
+              login $HEROKU_EMAIL
+              password $HEROKU_API_KEY
+          EOF
+
+      # 第 4 步：登录到 Heroku *容器注册表* (为 Docker)
+      - name: Log in to Heroku Container Registry
+        run: heroku container:login
+
+      # 第 5 步：构建并推送 Docker 镜像
+      - name: Build and push
+        run: heroku container:push web --app codio8-5
+
+      # 第 6 步：发布 App
+      - name: Release
+        run: heroku container:release web --app codio8-5
