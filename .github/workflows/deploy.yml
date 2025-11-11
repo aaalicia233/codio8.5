@@ -3,22 +3,23 @@ name: Deploy to Heroku
 on:
   push:
     branches:
-      - master  # 确保这仍然是你本地的分支名
+      - master  # Make sure this is still your branch name
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 第 1 步：获取你的代码
+      # Step 1: Get your code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 第 2 步：安装 Heroku CLI (这是修复问题的关键！)
-      # 我们使用一个专门用于安装 Heroku CLI 的 Action
+      # --- THIS IS THE NEW, ROBUST FIX ---
+      # Step 2: Install Heroku CLI using the official script
       - name: Install Heroku CLI
-        uses: gha-utilities/heroku-cli-action@v3.2.0
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+      # --- END OF FIX ---
 
-      # 第 3 步：登录 Heroku (为 CLI 创建 .netrc 文件)
+      # Step 3: Log in to Heroku (for CLI)
       - name: Log in to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
@@ -33,14 +34,14 @@ jobs:
               password $HEROKU_API_KEY
           EOF
 
-      # 第 4 步：登录到 Heroku *容器注册表* (为 Docker)
+      # Step 4: Log in to Heroku *Container Registry* (for Docker)
       - name: Log in to Heroku Container Registry
         run: heroku container:login
 
-      # 第 5 步：构建并推送 Docker 镜像
+      # Step 5: Build and push Docker image
       - name: Build and push
         run: heroku container:push web --app codio8-5
 
-      # 第 6 步：发布 App
+      # Step 6: Release App
       - name: Release
         run: heroku container:release web --app codio8-5
