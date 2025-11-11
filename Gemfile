@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-ruby '2.6.6'
+ruby '2.6.10'
 gem 'rails', '4.2.11'
 gem 'ffi', '1.14.2'
 
