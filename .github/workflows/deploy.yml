@@ -1,0 +1,23 @@
+name: Deploy to Heroku
+
+on:
+  push:
+    branches:
+      - master  # 警告：如果你的分支叫 'main'，请把这里改成 'main'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build and Deploy to Heroku
+        uses: akhileshns/heroku-deploy@v3.12.12 # 这是一个预构建的 GitHub Action
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: "codio8-5" # 你的 Heroku App 名字
+          heroku_email: "nt2418@nyu.edu" # 你的 Heroku 登录邮箱
+          stack: "container"
+          usedocker: true
+          docker_build_args: "--file Dockerfile" # 明确告诉它使用哪个 Dockerfile
