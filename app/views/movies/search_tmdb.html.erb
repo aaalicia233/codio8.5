@@ -8,7 +8,7 @@
 
 <h1>Search TMDb</h1>
 
-<%= form_tag search_tmdb_path, method: :get, id: 'tmdb_form' do %>
+<%= form_tag search_path, method: :get, id: 'tmdb_form' do %>
 
   <%# 
     这些字段将生成一个哈希: params[:search]
@@ -16,11 +16,11 @@
   %>
   <div>
     <%= label_tag 'search[title]', 'Title' %>
-    <%= text_field_tag 'search[title]', params.dig(:search, :title) %>
+    <%= text_field_tag 'search[title]', params.dig(:search, :title), id: 'movie_title_field' %>
   </div>
   <div>
     <%= label_tag 'search[release_year]', 'Release Year (Optional)' %>
-    <%= text_field_tag 'search[release_year]', params.dig(:search, :release_year) %>
+    <%= text_field_tag 'search[release_year]', params.dig(:search, :release_year), id: 'movie_year_field' %>
   </div>
   <div>
     <%= label_tag 'search[language]', 'Language' %>

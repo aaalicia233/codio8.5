@@ -1,12 +1,13 @@
 class MoviesController < ApplicationController
   # 这些是TDD作业开始时就应该存在的标准方法
   def index
-    # These 3 lines are the patch to stop the view from crashing
+    # --- 这是修复补丁 ---
+    # 你的视图 (view) 需要这些来自旧作业的变量
     @all_ratings = Movie.all_ratings
     @ratings_to_show_hash = {}
     @sort_by = nil
+    # --- 补丁结束 ---
   
-    # This is the original line for this assignment
     @movies = Movie.all
   end
 
